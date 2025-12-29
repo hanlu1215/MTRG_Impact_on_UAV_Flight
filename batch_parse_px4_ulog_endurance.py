@@ -8,6 +8,12 @@ import pandas as pd
 from pyulog import ULog
 
 # ==================== 配置参数 ====================
+# 输入目录：包含.ulg文件的目录（结果将保存在该目录下的Result文件夹）
+INPUT_DIR = "ULOG_2"  # 可以修改为其他路径，例如: "F:\\logs" 或 "ULOG"
+
+# 电流系数：用于修正电池电流数据的偏差（默认为1.0，表示不修正）
+CURRENT_COEFFICIENT = 1 # 根据实际情况调整此系数 针对的是20251228晚的实验修正，其中电流系数经过10A校准，得到的是改正后的值
+
 # 设置要绘制的遥控器通道编号（1-18），可以是单个或多个通道
 # 例如: [5] 表示只绘制通道5
 #      [1, 2, 3, 4] 表示绘制通道1-4
@@ -87,11 +93,14 @@ def extract_battery(ulog: ULog) -> pd.DataFrame:
     ts = np.asarray(data["timestamp"], dtype=np.float64)
     time_s = (ts - ts[0]) * 1e-6
 
+    # 应用电流系数进行修正
+    corrected_current = np.asarray(data["current_a"]) * CURRENT_COEFFICIENT
+
     battery_df = pd.DataFrame(
         {
             "time_s": time_s,
             "voltage_v": data["voltage_v"],
-            "current_a": data["current_a"],
+            "current_a": corrected_current,
         }
     )
     return battery_df
@@ -249,36 +258,18 @@ def batch_process(input_dir: Path, output_base_dir: Path = None, recursive: bool
 
 def main():
     parser = argparse.ArgumentParser(
-        description="批量处理PX4 ULog文件，生成姿态角、遥控器、电池数据及图表",
+        description=f"批量处理PX4 ULog文件，生成姿态角、遥控器、电池数据及图表（当前输入目录: {INPUT_DIR}，结果保存在 {INPUT_DIR}/Result）",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-  # 处理默认ULOG文件夹，输出到Result文件夹
+  # 处理配置的输入目录（默认ULOG_1）
   python batch_parse_px4_ulog.py
   
-  # 处理指定目录下的所有.ulg文件
-  python batch_parse_px4_ulog.py --input-dir F:\\logs
-  
   # 递归处理所有子目录中的.ulg文件
-  python batch_parse_px4_ulog.py --input-dir ULOG --recursive
+  python batch_parse_px4_ulog.py --recursive
   
-  # 指定输出目录
-  python batch_parse_px4_ulog.py --input-dir ULOG --output-dir F:\\results
+注意: 要修改输入目录，请直接编辑脚本开头的 INPUT_DIR 参数
         """
-    )
-    
-    parser.add_argument(
-        "--input-dir",
-        type=Path,
-        default=Path.cwd() / "ULOG",
-        help="包含.ulg文件的输入目录 (默认: 当前目录/ULOG)"
-    )
-    
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
-        default=Path.cwd() / "Result",
-        help="输出目录 (默认: 当前目录/Result)"
     )
     
     parser.add_argument(
@@ -286,15 +277,19 @@ def main():
         action="store_true",
         help="递归搜索子目录中的.ulg文件"
     )
-    
+
     args = parser.parse_args()
     
+    # 使用配置的输入目录
+    input_dir = Path.cwd() / INPUT_DIR if not Path(INPUT_DIR).is_absolute() else Path(INPUT_DIR)
+    output_dir = input_dir / "Result"
+    
     try:
-        batch_process(args.input_dir, args.output_dir, args.recursive)
-        input("\n按回车键退出...")
+        batch_process(input_dir, output_dir, args.recursive)
+        print("🎉 全部处理完成！")
     except Exception as e:
         print(f"\n❌ 致命错误: {e}")
-        input("\n按回车键退出...")
+        print("处理过程中出现错误，程序终止。")
         raise
 
 

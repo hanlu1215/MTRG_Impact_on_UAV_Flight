@@ -1,2 +1,9 @@
-ULOG/
-Result/
+# Ignore
+*.XML
+*.MP4
+*.csv
+*.ulg
+*.pdf
+*.png
+*.xlsx
+*.xls
