@@ -8,7 +8,8 @@ trim_time = 15;  % 去掉前后的时间（秒）
 
 %% 定义文件路径
 % with_MTRG 数据
-with_MTRG = ["ULOG_2\Result\log_0_2025-12-29-16-24-46\电池.xlsx"];
+with_MTRG = ["ULOG_2\Result\log_0_2025-12-29-16-24-46\电池.xlsx",...
+             "ULOG_2\Result\log_2_2025-12-29-18-15-02\电池.xlsx"];
 
 % without_MTRG 数据
 without_MTRG = ["ULOG_2\Result\log_1_2025-12-29-17-23-40\电池.xlsx"];
@@ -189,7 +190,7 @@ function [summary_row, detail_table] = process_single_battery_file(filePath, cur
     xlabel('Time (s)');
     ylabel('Voltage (V)');
     title('Battery Voltage (Raw vs Filtered)');
-    legend('show', 'Location', 'best');
+    % legend('show', 'Location', 'best');
     fontsize(28, "points");
     box on; % 添加边框
     set(gca, 'XColor', 'k', 'YColor', 'k');
@@ -204,7 +205,7 @@ function [summary_row, detail_table] = process_single_battery_file(filePath, cur
     xlabel('Time (s)');
     ylabel('Current (A)');
     title('Battery Current (Raw vs Filtered)');
-    legend('show', 'Location', 'best');
+    % legend('show', 'Location', 'best');
     fontsize(28, "points");
     box on; % 添加边框
     set(gca, 'XColor', 'k', 'YColor', 'k');
@@ -219,7 +220,7 @@ function [summary_row, detail_table] = process_single_battery_file(filePath, cur
     xlabel('Time (s)');
     ylabel('Power (W)');
     title('Battery Power (Raw vs Filtered)');
-    legend('show', 'Location', 'best');
+    % legend('show', 'Location', 'best');
     fontsize(28, "points");
     box on; % 添加边框
     set(gca, 'XColor', 'k', 'YColor', 'k');

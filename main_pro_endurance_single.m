@@ -61,7 +61,7 @@ plot(time, voltage_filtered, 'r-', 'LineWidth', 1.5, 'DisplayName', 'Filtered Vo
 xlabel('Time (s)');
 ylabel('Voltage (V)');
 title('Battery Voltage (Raw vs Filtered)');
-legend('show', 'Location', 'best');
+% legend('show', 'Location', 'best');
 grid on;
 hold off;
 
@@ -73,7 +73,7 @@ plot(time, current_filtered, 'r-', 'LineWidth', 1.5, 'DisplayName', 'Filtered Cu
 xlabel('Time (s)');
 ylabel('Current (A)');
 title('Battery Current (Raw vs Filtered)');
-legend('show', 'Location', 'best');
+% legend('show', 'Location', 'best');
 grid on;
 hold off;
 
@@ -85,7 +85,7 @@ plot(time, power_filtered, 'r-', 'LineWidth', 1.5, 'DisplayName', 'Filtered Powe
 xlabel('Time (s)');
 ylabel('Power (W)');
 title('Battery Power (Raw vs Filtered)');
-legend('show', 'Location', 'best');
+% legend('show', 'Location', 'best');
 grid on;
 hold off;
 
