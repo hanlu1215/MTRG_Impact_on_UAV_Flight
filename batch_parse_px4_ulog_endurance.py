@@ -14,10 +14,7 @@ INPUT_DIR = "ULOG_2"  # 可以修改为其他路径，例如: "F:\\logs" 或 "UL
 # 电流系数：用于修正电池电流数据的偏差（默认为1.0，表示不修正）
 CURRENT_COEFFICIENT = 1 # 根据实际情况调整此系数 针对的是20251228晚的实验修正，其中电流系数经过10A校准，得到的是改正后的值
 
-# 设置要绘制的遥控器通道编号（1-18），可以是单个或多个通道
-# 例如: [5] 表示只绘制通道5
-#      [1, 2, 3, 4] 表示绘制通道1-4
-RC_CHANNELS_TO_PLOT = [6]
+# 注意：遥控器通道数据仍会提取并保存到Excel，但不会绘制图表
 # ==================================================
 
 # 配置中文字体支持
@@ -107,44 +104,34 @@ def extract_battery(ulog: ULog) -> pd.DataFrame:
 
 
 def plot_combined(attitude_df: pd.DataFrame, rc_df: pd.DataFrame, battery_df: pd.DataFrame, output_path: Path) -> None:
-    """Plot attitude, RC channels, and battery data in a single figure with 3 subplots."""
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
+    """Plot attitude and battery data in a single figure with 2 subplots."""
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
     
-    # Plot 1: Attitude angles
+    # Plot 1: Attitude angles (roll, pitch, yaw)
     ax1.plot(attitude_df["time_s"], attitude_df["roll_deg"], label="Roll", linewidth=1.5)
     ax1.plot(attitude_df["time_s"], attitude_df["pitch_deg"], label="Pitch", linewidth=1.5)
+    ax1.plot(attitude_df["time_s"], attitude_df["yaw_deg"], label="Yaw", linewidth=1.5)
     ax1.set_title("Attitude Angles", fontsize=12, fontweight='bold')
     ax1.set_ylabel("Angle [deg]", fontsize=10)
-    ax1.set_ylim(-20, 20)
     ax1.grid(True, linestyle="--", alpha=0.5)
     ax1.legend(loc='upper right')
     
-    # Plot 2: RC channels (plot specified channels from RC_CHANNELS_TO_PLOT)
-    for ch_num in RC_CHANNELS_TO_PLOT:
-        col_name = f"channel[{ch_num-1}]"
-        if col_name in rc_df.columns:
-            ax2.plot(rc_df["time_s"], rc_df[col_name], label=f"{ch_num}", linewidth=1.5)
-    ax2.set_title("RC Channels", fontsize=12, fontweight='bold')
-    ax2.set_ylabel("Channel Value", fontsize=10)
+    # Plot 2: Battery voltage and current
+    ax2_twin = ax2.twinx()
+    line1 = ax2.plot(battery_df["time_s"], battery_df["voltage_v"], 'b-', label="Voltage", linewidth=1.5)
+    line2 = ax2_twin.plot(battery_df["time_s"], battery_df["current_a"], 'r-', label="Current", linewidth=1.5)
+    
+    ax2.set_title("Battery Status", fontsize=12, fontweight='bold')
+    ax2.set_xlabel("Time [s]", fontsize=10)
+    ax2.set_ylabel("Voltage [V]", fontsize=10, color='b')
+    ax2_twin.set_ylabel("Current [A]", fontsize=10, color='r')
+    ax2.tick_params(axis='y', labelcolor='b')
+    ax2_twin.tick_params(axis='y', labelcolor='r')
     ax2.grid(True, linestyle="--", alpha=0.5)
-    ax2.legend(loc='upper right', ncol=min(4, len(RC_CHANNELS_TO_PLOT)))
-    
-    # Plot 3: Battery voltage and current
-    ax3_twin = ax3.twinx()
-    line1 = ax3.plot(battery_df["time_s"], battery_df["voltage_v"], 'b-', label="Voltage", linewidth=1.5)
-    line2 = ax3_twin.plot(battery_df["time_s"], battery_df["current_a"], 'r-', label="Current", linewidth=1.5)
-    
-    ax3.set_title("Battery Status", fontsize=12, fontweight='bold')
-    ax3.set_xlabel("Time [s]", fontsize=10)
-    ax3.set_ylabel("Voltage [V]", fontsize=10, color='b')
-    ax3_twin.set_ylabel("Current [A]", fontsize=10, color='r')
-    ax3.tick_params(axis='y', labelcolor='b')
-    ax3_twin.tick_params(axis='y', labelcolor='r')
-    ax3.grid(True, linestyle="--", alpha=0.5)
     
     lines = line1 + line2
     labels = [l.get_label() for l in lines]
-    ax3.legend(lines, labels, loc='upper right')
+    ax2.legend(lines, labels, loc='upper right')
     
     fig.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)

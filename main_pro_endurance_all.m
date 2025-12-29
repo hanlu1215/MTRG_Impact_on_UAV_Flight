@@ -1,5 +1,5 @@
 % 批量处理程序：读取多个电池数据，绘制滤波前后的电压、电流和功率曲线，并汇总统计结果
-clear; clc; close all;
+hll
 
 %% 参数设置
 current_coefficient = 1;  % 电流系数（可调整电流大小）
@@ -9,10 +9,13 @@ trim_time = 15;  % 去掉前后的时间（秒）
 %% 定义文件路径
 % with_MTRG 数据
 with_MTRG = ["ULOG_2\Result\log_0_2025-12-29-16-24-46\电池.xlsx",...
-             "ULOG_2\Result\log_2_2025-12-29-18-15-02\电池.xlsx"];
+             "ULOG_2\Result\log_2_2025-12-29-18-15-02\电池.xlsx",...
+             "ULOG_2\Result\log_4_2025-12-29-20-13-44\电池.xlsx"];
 
 % without_MTRG 数据
-without_MTRG = ["ULOG_2\Result\log_1_2025-12-29-17-23-40\电池.xlsx"];
+without_MTRG = ["ULOG_2\Result\log_1_2025-12-29-17-23-40\电池.xlsx",...
+                "ULOG_2\Result\log_3_2025-12-29-19-07-54\电池.xlsx",...
+                "ULOG_2\Result\log_5_2025-12-29-21-20-00\电池.xlsx"];
 
 %% 初始化汇总数据存储
 summary_with_MTRG = [];
@@ -95,6 +98,21 @@ time_std_with = std(time_with);
 time_mean_without = mean(time_without);
 time_std_without = std(time_without);
 
+% 保存最终统计结果为result_finally.csv
+result_finally = table(...
+    {'without_MTRG'; 'with_MTRG'}, ...
+    [power_mean_without; power_mean_with], ...
+    [power_std_without; power_std_with], ...
+    [length(power_without); length(power_with)], ...
+    [time_mean_without; time_mean_with], ...
+    [time_std_without; time_std_with], ...
+    [length(time_without); length(time_with)], ...
+    'VariableNames', {'组别', '功率均值_W', '功率标准差_W', '功率样本容量', '时间均值_s', '时间标准差_s', '时间样本容量'});
+
+resultFinallyPath = fullfile(resultFolder, 'result_finally.csv');
+writetable(result_finally, resultFinallyPath, 'Encoding', 'UTF-8');
+fprintf('最终统计结果已保存到: %s\n\n', resultFinallyPath);
+
 %% 绘制对比图
 % 图1：功率均值对比（带误差棒）
 figure('Name', 'Power Comparison', 'NumberTitle', 'off');
@@ -144,6 +162,81 @@ fprintf('\n========================================\n');
 fprintf('所有数据处理完成！\n');
 fprintf('========================================\n');
 
+%% 绘制第三组数据对比图（with_MTRG vs without_MTRG）
+fprintf('\n========================================\n');
+fprintf('开始绘制第三组数据对比图...\n');
+fprintf('========================================\n\n');
+
+% 读取第三组数据
+with_MTRG_file3 = with_MTRG(3);
+without_MTRG_file3 = without_MTRG(3);
+
+% 读取 with_MTRG 第三组数据
+data_with = readtable(with_MTRG_file3);
+time_with_3 = data_with{:,1};
+voltage_with_3 = data_with{:,2};
+current_with_3 = data_with{:,3} * current_coefficient;
+power_with_3 = voltage_with_3 .* current_with_3;
+
+% 读取 without_MTRG 第三组数据
+data_without = readtable(without_MTRG_file3);
+time_without_3 = data_without{:,1};
+voltage_without_3 = data_without{:,2};
+current_without_3 = data_without{:,3} * current_coefficient;
+power_without_3 = voltage_without_3 .* current_without_3;
+
+% 创建对比图
+figure('Name', 'Comparison: with_MTRG vs without_MTRG (Group 3)', 'NumberTitle', 'off', 'Position', [100, 100, 1000, 800]);
+
+% 子图1：电压对比
+subplot(3,1,1);
+plot(time_without_3, voltage_without_3, 'b-', 'LineWidth', 1.5, 'DisplayName', 'without MTRG');
+hold on;
+plot(time_with_3, voltage_with_3, 'r--', 'LineWidth', 1.5, 'DisplayName', 'with MTRG');
+xlabel('Time (s)');
+ylabel('Voltage V (V)');
+legend('show', 'Location', 'best');
+fontsize(28, "points");
+box on;
+set(gca, 'XColor', 'k', 'YColor', 'k');
+hold off;
+
+% 子图2：电流对比
+subplot(3,1,2);
+plot(time_without_3, current_without_3, 'b-', 'LineWidth', 1.5, 'DisplayName', 'without MTRG');
+hold on;
+plot(time_with_3, current_with_3, 'r--', 'LineWidth', 1.5, 'DisplayName', 'with MTRG');
+xlabel('Time (s)');
+ylabel('Current I (A)');
+% legend('show', 'Location', 'best');
+fontsize(28, "points");
+box on;
+set(gca, 'XColor', 'k', 'YColor', 'k');
+hold off;
+
+% 子图3：功率对比
+subplot(3,1,3);
+plot(time_without_3, power_without_3, 'b-', 'LineWidth', 1.5, 'DisplayName', 'without MTRG');
+hold on;
+plot(time_with_3, power_with_3, 'r--', 'LineWidth', 1.5, 'DisplayName', 'with MTRG');
+xlabel('Time (s)');
+ylabel('Power P (W)');
+% legend('show', 'Location', 'best');
+fontsize(28, "points");
+box on;
+set(gca, 'XColor', 'k', 'YColor', 'k');
+hold off;
+
+% 保存对比图
+comparisonFigPath = fullfile(resultFolder, 'Comparison_Group3_with_vs_without.png');
+saveas(gcf, comparisonFigPath);
+fprintf('第三组对比图已保存到: %s\n', comparisonFigPath);
+
+% 保存为PDF格式
+comparisonPdfPath = fullfile(resultFolder, 'Comparison_Group3_with_vs_without.pdf');
+exportgraphics(gcf, comparisonPdfPath, 'ContentType', 'vector');
+fprintf('第三组对比图PDF已保存到: %s\n\n', comparisonPdfPath);
+
 %% 函数定义：处理单个电池文件
 function [summary_row, detail_table] = process_single_battery_file(filePath, current_coefficient, filter_window, trim_time, fig_suffix)
     % 提取文件夹路径用于保存结果
@@ -180,16 +273,16 @@ function [summary_row, detail_table] = process_single_battery_file(filePath, cur
     power_filtered = voltage_filtered .* current_filtered;
     
     %% 绘制对比图
-    figure('Name', ['Battery Data Analysis - ' fig_suffix], 'NumberTitle', 'off', 'Position', [100, 100, 1200, 800]);
+    figure('Name', ['Battery Data Analysis - ' fig_suffix], 'NumberTitle', 'off', 'Position', [100, 100, 1000, 800]);
     
     % 子图1：电压（滤波前后对比）
     subplot(3,1,1);
     plot(time, voltage, 'b-', 'LineWidth', 1, 'DisplayName', 'Raw Voltage');
-    hold on;
-    plot(time, voltage_filtered, 'r-', 'LineWidth', 1.5, 'DisplayName', 'Filtered Voltage');
+    % hold on;
+    % plot(time, voltage_filtered, 'r-', 'LineWidth', 1.5, 'DisplayName', 'Filtered Voltage');
     xlabel('Time (s)');
-    ylabel('Voltage (V)');
-    title('Battery Voltage (Raw vs Filtered)');
+    ylabel('Voltage V (V)');
+    % title('Battery Voltage');
     % legend('show', 'Location', 'best');
     fontsize(28, "points");
     box on; % 添加边框
@@ -200,11 +293,11 @@ function [summary_row, detail_table] = process_single_battery_file(filePath, cur
     % 子图2：电流（滤波前后对比）
     subplot(3,1,2);
     plot(time, current, 'b-', 'LineWidth', 1, 'DisplayName', 'Raw Current');
-    hold on;
-    plot(time, current_filtered, 'r-', 'LineWidth', 1.5, 'DisplayName', 'Filtered Current');
+    % hold on;
+    % plot(time, current_filtered, 'r-', 'LineWidth', 1.5, 'DisplayName', 'Filtered Current');
     xlabel('Time (s)');
-    ylabel('Current (A)');
-    title('Battery Current (Raw vs Filtered)');
+    ylabel('Current A (A)');
+    % title('Battery Current');
     % legend('show', 'Location', 'best');
     fontsize(28, "points");
     box on; % 添加边框
@@ -215,11 +308,11 @@ function [summary_row, detail_table] = process_single_battery_file(filePath, cur
     % 子图3：功率（滤波前后对比）
     subplot(3,1,3);
     plot(time, power, 'b-', 'LineWidth', 1, 'DisplayName', 'Raw Power');
-    hold on;
-    plot(time, power_filtered, 'r-', 'LineWidth', 1.5, 'DisplayName', 'Filtered Power');
+    % hold on;
+    % plot(time, power_filtered, 'r-', 'LineWidth', 1.5, 'DisplayName', 'Filtered Power');
     xlabel('Time (s)');
-    ylabel('Power (W)');
-    title('Battery Power (Raw vs Filtered)');
+    ylabel('Power P (W)');
+    % title('Battery Power');
     % legend('show', 'Location', 'best');
     fontsize(28, "points");
     box on; % 添加边框
@@ -229,8 +322,14 @@ function [summary_row, detail_table] = process_single_battery_file(filePath, cur
     
     % 保存图片到电池.xlsx所在文件夹
     figFilePath = fullfile(folderPath, 'Battery_Data_Analysis.png');
+    fprintf('  图片已保存到: %s\n', figFilePath);
+    
+    % 也保存为PDF格式
+    pdfFilePath = fullfile(folderPath, 'Battery_Data_Analysis.pdf');
+    exportgraphics(gcf, pdfFilePath, 'ContentType', 'vector');
+    fprintf('  PDF已保存到: %s\n', pdfFilePath);
     saveas(gcf, figFilePath);
-    close(gcf);  % 关闭图形窗口以节省内存
+    % close(gcf);  % 关闭图形窗口以节省内存
     
     %% 计算统计信息（去掉前后trim_time秒数据）
     % 找到时间范围

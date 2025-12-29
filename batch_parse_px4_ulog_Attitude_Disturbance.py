@@ -113,6 +113,7 @@ def plot_combined(attitude_df: pd.DataFrame, rc_df: pd.DataFrame, battery_df: pd
     # Plot 1: Attitude angles
     ax1.plot(attitude_df["time_s"], attitude_df["roll_deg"], label="Roll", linewidth=1.5)
     ax1.plot(attitude_df["time_s"], attitude_df["pitch_deg"], label="Pitch", linewidth=1.5)
+    ax1.plot(attitude_df["time_s"], attitude_df["yaw_deg"], label="Yaw", linewidth=1.5)
     ax1.set_title("Attitude Angles", fontsize=12, fontweight='bold')
     ax1.set_ylabel("Angle [deg]", fontsize=10)
     ax1.set_ylim(-20, 20)
